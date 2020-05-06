@@ -17,8 +17,16 @@ public class Rocket : MonoBehaviour {
     [SerializeField] ParticleSystem deathParticles;
     [SerializeField] ParticleSystem successParticles;
 
+    [SerializeField] int currentLevel;
+    [SerializeField] int nextLevel;
+
+    [SerializeField] KeyCode nextLevelHotKey = KeyCode.Tab;
+    [SerializeField] KeyCode unbreakableHotKey = KeyCode.CapsLock;
+
     Rigidbody rigidBody;
     AudioSource audioSource;
+
+    bool breakable = true;
 
     enum State {
         Alive, Dying, Transcending
@@ -33,12 +41,24 @@ public class Rocket : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
+        if (Debug.isDebugBuild) {
+            RespondToDebugKeys();
+        }
         if (state == State.Alive) {
             RespondToThrustInput();
             RespondToRotateInput();
         } /*else {
             audioSource.Stop();
         } */
+    }
+
+    private void RespondToDebugKeys() {
+        if (Input.GetKeyDown(unbreakableHotKey)) {
+            breakable = !breakable;
+        }
+        if (Input.GetKeyDown(nextLevelHotKey)) {
+            LoadNextLevel();
+        }
     }
 
     private void OnCollisionEnter(Collision collision) {
@@ -59,7 +79,9 @@ public class Rocket : MonoBehaviour {
                 //
                 break;
             default:
-                Die();
+                if (breakable) {
+                    Die();
+                }
                 break;
         }
     }
@@ -81,12 +103,12 @@ public class Rocket : MonoBehaviour {
     }
 
     private void Reborn() {
-        SceneManager.LoadScene(0);
+        SceneManager.LoadScene(currentLevel);
         audioSource.Stop();
     }
 
     private void LoadNextLevel() {
-        SceneManager.LoadScene(1);
+        SceneManager.LoadScene(nextLevel);
     }
 
     private void RespondToThrustInput() {
