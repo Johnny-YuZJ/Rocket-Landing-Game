@@ -17,8 +17,8 @@ public class Rocket : MonoBehaviour {
     [SerializeField] ParticleSystem deathParticles;
     [SerializeField] ParticleSystem successParticles;
 
-    [SerializeField] int currentLevel;
-    [SerializeField] int nextLevel;
+    [SerializeField] int currentLevelIndex = 0;
+    [SerializeField] int nextLevelIndex = 0;
 
     [SerializeField] KeyCode nextLevelHotKey = KeyCode.Tab;
     [SerializeField] KeyCode unbreakableHotKey = KeyCode.CapsLock;
@@ -35,8 +35,18 @@ public class Rocket : MonoBehaviour {
     State state = State.Alive;
 
     void Start() {
+        ResetLevelIndex();
         rigidBody = GetComponent<Rigidbody>();
         audioSource = GetComponent<AudioSource>();
+    }
+
+    private void ResetLevelIndex() {
+        if (currentLevelIndex == 0) {
+            currentLevelIndex = SceneManager.GetActiveScene().buildIndex;
+        }
+        if ((nextLevelIndex == 0) && (currentLevelIndex != SceneManager.sceneCountInBuildSettings - 1)) {
+            nextLevelIndex = currentLevelIndex + 1;
+        }
     }
 
     // Update is called once per frame
@@ -47,9 +57,7 @@ public class Rocket : MonoBehaviour {
         if (state == State.Alive) {
             RespondToThrustInput();
             RespondToRotateInput();
-        } /*else {
-            audioSource.Stop();
-        } */
+        }
     }
 
     private void RespondToDebugKeys() {
@@ -103,12 +111,12 @@ public class Rocket : MonoBehaviour {
     }
 
     private void Reborn() {
-        SceneManager.LoadScene(currentLevel);
+        SceneManager.LoadScene(currentLevelIndex);
         audioSource.Stop();
     }
 
     private void LoadNextLevel() {
-        SceneManager.LoadScene(nextLevel);
+        SceneManager.LoadScene(nextLevelIndex);
     }
 
     private void RespondToThrustInput() {
@@ -129,13 +137,12 @@ public class Rocket : MonoBehaviour {
     }
 
     private void RespondToRotateInput() {
+        rigidBody.angularVelocity = Vector3.zero;
         float rotationThisFrame = rcsThrust * Time.deltaTime;
-        rigidBody.freezeRotation = true;
         if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) {
             transform.Rotate(Vector3.forward * rotationThisFrame);
         } else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) {
             transform.Rotate(-Vector3.forward * rotationThisFrame);
         }
-        rigidBody.freezeRotation = false;
     }
 }
